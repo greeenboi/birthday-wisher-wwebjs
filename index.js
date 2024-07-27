@@ -10,14 +10,23 @@ const port = process.env.PORT || 3000;
 const apiKey = process.env.API_KEY;
 const sessionName = process.env.SESSION_SECRET;
 
+console.log('Connecting to MongoDB...');
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('API_KEY:', process.env.API_KEY);
+console.log('SESSION_SECRET:', process.env.SESSION_SECRET);
+
 mongoose.connect(process.env.MONGODB_URI).then(async () => {
     const store = new MongoStore({ mongoose: mongoose });
     const client = new Client({
         authStrategy: new RemoteAuth({
             store: store,
-            backupSyncIntervalMs: 300000
+            backupSyncIntervalMs: 300000,
+            clientId:  'client1',
+            dataPath: './data/',
         }),
+        restartOnAuthFail: true,
         puppeteer: {
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         }
     });
@@ -27,7 +36,7 @@ mongoose.connect(process.env.MONGODB_URI).then(async () => {
     }
 
     client.on('qr', qr => {
-        console.log('No session found in database. Please scan QR code to login.');
+        console.log('No session found Locally. Please scan QR code to login.');
         qrcode.generate(qr, { small: true });
     });
 
