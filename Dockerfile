@@ -9,7 +9,15 @@
 ARG NODE_VERSION=20.12.2
 ARG PNPM_VERSION=8.11.0
 
-FROM node:${NODE_VERSION}-alpine
+# Use a Debian-based image instead of Alpine
+FROM node:${NODE_VERSION}
+
+# Install necessary packages using apt-get
+RUN apt-get update && apt-get install -y \
+    bash \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Use production node environment by default.
 ENV NODE_ENV production
@@ -17,6 +25,15 @@ ENV NODE_ENV production
 # Install pnpm.
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g pnpm@${PNPM_VERSION}
+
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* 
 
 WORKDIR /usr/src/app
 
@@ -37,6 +54,9 @@ COPY . .
 
 # Copy the environment file into the image.
 COPY .env .env
+
+# Copy the data files into the image.
+COPY data/ ./data/
 
 # Expose the port that the application listens on.
 EXPOSE 3000
