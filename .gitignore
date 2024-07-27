@@ -3,3 +3,4 @@
 .wwebjs_auth/*
 .env
 .env.local
+/data/**
